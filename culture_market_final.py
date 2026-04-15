@@ -68,7 +68,33 @@ with st.sidebar:
             st.session_state.investments[stock] = st.sidebar.slider(
                 f"{stock}", 0, 100, st.session_state.investments[stock]
             )
+st.divider()
+    
+    # 2. BUDGET REFRESH LOGIC
+    st.metric("Allowed Budget", f"${st.session_state.total_budget}")
+    
+    total_spent = sum(st.session_state.investments.values())
+    diff = st.session_state.total_budget - total_spent
+    
+    if diff < 0:
+        st.error(f"⚠️ OVER BUDGET: ${abs(diff)}")
+    elif diff > 0:
+        st.warning(f"Unallocated: ${diff}")
+    else:
+        st.success("✅ Portfolio Balanced")
 
+    # The Refresh Button: Forces a recalculation of the state
+    if st.button("🔄 Refresh Budget Alignment"):
+        st.toast("Budget calculations refreshed!")
+        st.rerun()
+
+    st.divider()
+    if current_phase != "Final Analysis":
+        st.write("### Adjust Investments")
+        for stock in st.session_state.investments.keys():
+            st.session_state.investments[stock] = st.sidebar.slider(
+                f"{stock}", 0, 100, st.session_state.investments[stock]
+            )
 # --- MAIN DASHBOARD ---
 st.title("📈 GEHA D&A Culture Stock Market")
 
