@@ -6,7 +6,6 @@ import plotly.express as px
 st.set_page_config(page_title="GEHA D&A Culture Stock Market", layout="wide")
 
 # --- INITIAL STATE MANAGEMENT ---
-# Using session_state to ensure data persists across reruns
 if 'total_budget' not in st.session_state:
     st.session_state.total_budget = 100
 if 'history' not in st.session_state:
@@ -23,42 +22,44 @@ if 'investments' not in st.session_state:
         "Sustainable Pace & Focus": 15
     }
 
-# Phases of the Exercise
 PHASES = ["Initial Allocation", "Strategic Pivot", "Leadership Change", "Final Analysis"]
 current_phase = PHASES[st.session_state.phase]
 
 # --- SIDEBAR CONTROLS ---
 with st.sidebar:
-    st.title("Admin Controls")
-    st.write(f"**Current Phase:** {current_phase}")
+    st.title("Admin & Budget")
+    st.write(f"**Phase:** {current_phase}")
     
-    # ADVANCE BUTTON - Facilitator clicks this to move the story forward
+    # 1. ADVANCE PHASE (Facilitator Control)
     if st.session_state.phase < len(PHASES) - 1:
         if st.button("➡️ Advance to Next Phase"):
-            # Take a snapshot of current investments before moving
             snapshot = st.session_state.investments.copy()
             snapshot['Label'] = current_phase
             st.session_state.history.append(snapshot)
-            
             st.session_state.phase += 1
             st.rerun()
     
     st.divider()
-    st.metric("Total Market Budget", f"${st.session_state.total_budget}")
     
-    # Calculate Budget Health
+    # 2. BUDGET REFRESH LOGIC
+    st.metric("Allowed Budget", f"${st.session_state.total_budget}")
+    
     total_spent = sum(st.session_state.investments.values())
     diff = st.session_state.total_budget - total_spent
     
     if diff < 0:
-        st.error(f"OVER BUDGET: ${abs(diff)} (Cultural Debt)")
+        st.error(f"⚠️ OVER BUDGET: ${abs(diff)}")
     elif diff > 0:
         st.warning(f"Unallocated: ${diff}")
     else:
-        st.success("Budget Balanced")
+        st.success("✅ Portfolio Balanced")
+
+    # The Refresh Button: Forces a recalculation of the state
+    if st.button("🔄 Refresh Budget Alignment"):
+        st.toast("Budget calculations refreshed!")
+        st.rerun()
 
     st.divider()
-    # Sliders are only available until the final analysis
     if current_phase != "Final Analysis":
         st.write("### Adjust Investments")
         for stock in st.session_state.investments.keys():
@@ -71,35 +72,27 @@ st.title("📈 GEHA D&A Culture Stock Market")
 
 if current_phase == "Initial Allocation":
     st.header("Phase 1: Your Cultural Baseline")
-    st.info("Teams: Distribute your $100 across the behaviors you reward and tolerate.")
-    st.write("When the facilitator advances the phase, these values will be locked in as your baseline.")
+    st.info("Teams: Distribute your $100. Use the 'Refresh' button in the sidebar to check your balance.")
 
 elif current_phase == "Strategic Pivot":
     st.header("⚡ Market Event: Strategic Pivot")
-    st.warning("Strategy has shifted mid-quarter! We are testing your Clarity & Decision Discipline.")
     
     clarity = st.session_state.investments["Clarity & Decision Discipline"]
     if clarity > 25:
-        st.success(f"SUCCESS: Your Clarity score is ${clarity}. You navigated the pivot! Budget +$10.")
+        st.success(f"SUCCESS: Clarity score is ${clarity}. Budget +$10.")
         if 'pivot_applied' not in st.session_state:
             st.session_state.total_budget += 10
             st.session_state.pivot_applied = True
     else:
-        st.error(f"FAILURE: Your Clarity score is only ${clarity}. The pivot caused chaos. Budget -$10.")
+        st.error(f"FAILURE: Clarity score is only ${clarity}. Budget -$10.")
         if 'pivot_applied' not in st.session_state:
             st.session_state.total_budget -= 10
             st.session_state.pivot_applied = True
 
 elif current_phase == "Leadership Change":
     st.header("🚨 Market Event: Leadership Transition")
-    st.error("A new leader has arrived and demands immediate ROI. You are forced to shift focus.")
-    st.markdown("""
-    **MANDATE:**
-    1. Divest **$10** from two different stocks ($-20 total).
-    2. Re-invest that **$20** into **Clarity & Decision Discipline**.
-    """)
+    st.error("MANDATE: Divest $10 from two different stocks and move $20 to Clarity.")
     
-    # Helper tools for the team to execute the mandate
     col1, col2 = st.columns(2)
     with col1:
         options = [s for s in st.session_state.investments.keys() if s != "Clarity & Decision Discipline"]
@@ -111,26 +104,20 @@ elif current_phase == "Leadership Change":
         st.session_state.investments[sell1] -= 10
         st.session_state.investments[sell2] -= 10
         st.session_state.investments["Clarity & Decision Discipline"] += 20
-        st.success("Reallocation complete. Ready for Final Analysis.")
+        st.success("Reallocation complete! Refresh the budget in the sidebar to see the new status.")
 
 elif current_phase == "Final Analysis":
     st.header("📊 The Final Audit: Intent vs. Reality")
     
-    # Save the final state to history if not already there
     if len(st.session_state.history) < 4:
         final_snap = st.session_state.investments.copy()
         final_snap['Label'] = "Final Outcome"
         st.session_state.history.append(final_snap)
     
-    # Create comparison chart
     hist_df = pd.DataFrame(st.session_state.history)
     plot_df = hist_df.melt(id_vars=['Label'], var_name='Behavior', value_name='Investment')
-    
     fig = px.bar(plot_df, x='Behavior', y='Investment', color='Label', barmode='group', height=600)
     st.plotly_chart(fig, use_container_width=True)
-    
-    st.write("### Facilitation Insight")
-    st.write("Compare your **Initial Baseline** to your **Final Outcome**. Which 'values' were sacrificed when the market got tough?")
 
 # --- VISUAL FEEDBACK (Live Chart) ---
 if current_phase != "Final Analysis":
