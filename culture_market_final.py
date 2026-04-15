@@ -64,11 +64,10 @@ with st.sidebar:
     
     st.divider()
 
-    # 4. INPUT BOXES (Replacing Sliders)
+    # 4. NUMERIC INPUT BOXES
     if current_phase != "Final Analysis":
         st.write("### Enter Investments ($)")
         for stock in st.session_state.investments.keys():
-            # Using number_input for direct numeric entry
             st.session_state.investments[stock] = st.number_input(
                 f"{stock}", 
                 min_value=0, 
@@ -90,12 +89,13 @@ elif current_phase == "Strategic Pivot":
     
     if 'pivot_applied' not in st.session_state:
         clarity = st.session_state.investments["Clarity & Decision Discipline"]
-        if clarity > 25:
-            st.session_state.pivot_msg = (f"SUCCESS: Clarity score is ${clarity}. Budget +$10.", "success")
-            st.session_state.total_budget += 10
-        else:
-            st.session_state.pivot_msg = (f"FAILURE: Clarity score is only ${clarity}. Budget -$10.", "error")
+        # THRESHOLD: Penalty if Clarity is less than 20
+        if clarity < 20:
+            st.session_state.pivot_msg = (f"FAILURE: Your Clarity score is only ${clarity} (Threshold: $20). The pivot caused chaos. Budget -$10.", "error")
             st.session_state.total_budget -= 10
+        else:
+            st.session_state.pivot_msg = (f"SUCCESS: Your Clarity score is ${clarity}. You navigated the pivot! Budget +$10.", "success")
+            st.session_state.total_budget += 10
         st.session_state.pivot_applied = True
 
     msg, level = st.session_state.pivot_msg
@@ -105,21 +105,23 @@ elif current_phase == "Strategic Pivot":
 
 elif current_phase == "Leadership Change":
     st.header("🚨 Market Event: Leadership Transition")
-    st.error("MANDATE: Divest $10 from two stocks and move $20 into Clarity.")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        options = [s for s in st.session_state.investments.keys() if s != "Clarity & Decision Discipline"]
-        sell1 = st.selectbox("Sell $10 from:", options, key="s1")
-    with col2:
-        sell2 = st.selectbox("Sell $10 from:", [o for o in options if o != sell1], key="s2")
-    
-    if st.button("Execute Reallocation"):
-        # We modify the values; number_input will pick up the new 'value' on rerun
-        st.session_state.investments[sell1] -= 10
-        st.session_state.investments[sell2] -= 10
-        st.session_state.investments["Clarity & Decision Discipline"] += 20
-        st.rerun()
+    if 'leadership_applied' not in st.session_state:
+        safety = st.session_state.investments["Psychological Safety"]
+        # NEW LOGIC: If Safety < 20, they lose whatever they had invested in Safety
+        if safety < 20:
+            loss = safety
+            st.session_state.leadership_msg = (f"FAILURE: Psychological Safety score was ${safety} (Threshold: $20). The new leader interprets the silence as lack of competence. You lose all ${loss} invested in Safety.", "error")
+            st.session_state.total_budget -= loss
+            st.session_state.investments["Psychological Safety"] = 0
+        else:
+            st.session_state.leadership_msg = (f"SUCCESS: Psychological Safety score was ${safety}. Your team was safe enough to speak up early to the new leader. You held your investment.", "success")
+        st.session_state.leadership_applied = True
+
+    msg, level = st.session_state.leadership_msg
+    if level == "success": st.success(msg)
+    else: st.error(msg)
+    st.write("Adjust your inputs to the new limit to proceed.")
 
 elif current_phase == "Final Analysis":
     st.header("📊 The Final Audit: Intent vs. Reality")
