@@ -139,4 +139,4 @@ if current_phase != "Final Analysis":
     st.divider()
     df = pd.DataFrame(list(st.session_state.investments.items()), columns=['Stock', 'Investment'])
     fig_live = px.bar(df, x='Stock', y='Investment', range_y=[0, 100], text_auto=True)
-    st.plotly_chart(fig_live, use_container_width=True
+    st.plotly_chart(fig_live, use_container_width=True)
