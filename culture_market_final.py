@@ -35,7 +35,6 @@ with st.sidebar:
     total_spent = sum(st.session_state.investments.values())
     diff = st.session_state.total_budget - total_spent
     
-    # Validation Gate Logic
     is_balanced = (diff == 0)
 
     if diff < 0:
@@ -45,17 +44,16 @@ with st.sidebar:
     else:
         st.success("✅ Portfolio Balanced")
 
-    # 2. THE REFRESH BUTTON (Forces UI/State sync)
+    # 2. REFRESH BUTTON
     if st.button("🔄 Refresh Budget Alignment"):
         st.rerun()
 
     st.divider()
 
-    # 3. ADVANCE PHASE (Locked until balanced)
+    # 3. ADVANCE PHASE
     if st.session_state.phase < len(PHASES) - 1:
         if is_balanced:
             if st.button("➡️ Advance to Next Phase"):
-                # Snapshot before leaving phase
                 snapshot = st.session_state.investments.copy()
                 snapshot['Label'] = current_phase
                 st.session_state.history.append(snapshot)
@@ -66,12 +64,18 @@ with st.sidebar:
     
     st.divider()
 
-    # 4. SLIDERS
+    # 4. INPUT BOXES (Replacing Sliders)
     if current_phase != "Final Analysis":
-        st.write("### Adjust Investments")
+        st.write("### Enter Investments ($)")
         for stock in st.session_state.investments.keys():
-            st.session_state.investments[stock] = st.sidebar.slider(
-                f"{stock}", 0, 100, st.session_state.investments[stock]
+            # Using number_input for direct numeric entry
+            st.session_state.investments[stock] = st.number_input(
+                f"{stock}", 
+                min_value=0, 
+                max_value=200, 
+                value=int(st.session_state.investments[stock]),
+                step=1,
+                key=f"input_{stock}"
             )
 
 # --- MAIN DASHBOARD ---
@@ -79,7 +83,7 @@ st.title("📈 GEHA D&A Culture Stock Market")
 
 if current_phase == "Initial Allocation":
     st.header("Phase 1: Your Cultural Baseline")
-    st.info("Teams: Distribute your $100. The 'Advance' button unlocks only when exactly $100 is spent.")
+    st.info("Teams: Enter dollar amounts in the boxes. The 'Advance' button unlocks only when exactly $100 is spent.")
 
 elif current_phase == "Strategic Pivot":
     st.header("⚡ Market Event: Strategic Pivot")
@@ -97,7 +101,7 @@ elif current_phase == "Strategic Pivot":
     msg, level = st.session_state.pivot_msg
     if level == "success": st.success(msg)
     else: st.error(msg)
-    st.write("Rebalance your portfolio to the new limit to proceed.")
+    st.write("Adjust your inputs to the new limit to proceed.")
 
 elif current_phase == "Leadership Change":
     st.header("🚨 Market Event: Leadership Transition")
@@ -111,16 +115,15 @@ elif current_phase == "Leadership Change":
         sell2 = st.selectbox("Sell $10 from:", [o for o in options if o != sell1], key="s2")
     
     if st.button("Execute Reallocation"):
+        # We modify the values; number_input will pick up the new 'value' on rerun
         st.session_state.investments[sell1] -= 10
         st.session_state.investments[sell2] -= 10
         st.session_state.investments["Clarity & Decision Discipline"] += 20
-        st.toast("Math applied! Use 'Refresh' if sliders don't update.")
         st.rerun()
 
 elif current_phase == "Final Analysis":
     st.header("📊 The Final Audit: Intent vs. Reality")
     
-    # Save the final snapshot if missing
     if len(st.session_state.history) < 3:
         final_snap = st.session_state.investments.copy()
         final_snap['Label'] = "Final Outcome"
@@ -136,4 +139,4 @@ if current_phase != "Final Analysis":
     st.divider()
     df = pd.DataFrame(list(st.session_state.investments.items()), columns=['Stock', 'Investment'])
     fig_live = px.bar(df, x='Stock', y='Investment', range_y=[0, 100], text_auto=True)
-    st.plotly_chart(fig_live, use_container_width=True)
+    st.plotly_chart(fig_live, use_container_width=True
