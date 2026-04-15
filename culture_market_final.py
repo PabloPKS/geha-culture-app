@@ -22,7 +22,7 @@ if 'investments' not in st.session_state:
         "Sustainable Pace & Focus": 0
     }
 
-PHASES = ["Initial Allocation", "Strategic Pivot", "Leadership Change", "Final Analysis"]
+PHASES = ["Initial Allocation", "Strategic Pivot", "Leadership Change", "Open Enrollment & HEDIS", "IT Build-a-Thon", "Final Analysis"]
 current_phase = PHASES[st.session_state.phase]
 
 # --- SIDEBAR CONTROLS ---
@@ -82,56 +82,86 @@ st.title("📈 GEHA D&A Culture Stock Market")
 
 if current_phase == "Initial Allocation":
     st.header("Phase 1: Your Cultural Baseline")
-    st.info("Teams: Enter dollar amounts in the boxes. The 'Advance' button unlocks only when exactly $100 is spent.")
+    st.info("Teams: Enter dollar amounts. Advance button unlocks when budget is exactly $100.")
 
 elif current_phase == "Strategic Pivot":
     st.header("⚡ Market Event: Strategic Pivot")
-    
     if 'pivot_applied' not in st.session_state:
         clarity = st.session_state.investments["Clarity & Decision Discipline"]
         if clarity < 20:
-            st.session_state.pivot_msg = (f"FAILURE: Your Clarity score is only ${clarity} (Threshold: $20). The pivot caused chaos. Budget -$10.", "error")
+            st.session_state.pivot_msg = (f"FAILURE: Clarity score is ${clarity} (Min: $20). Budget -$10.", "error")
             st.session_state.total_budget -= 10
         else:
-            st.session_state.pivot_msg = (f"SUCCESS: Your Clarity score is ${clarity}. You navigated the pivot! Budget +$10.", "success")
+            st.session_state.pivot_msg = (f"SUCCESS: Clarity score is ${clarity}. Budget +$10.", "success")
             st.session_state.total_budget += 10
         st.session_state.pivot_applied = True
-
     msg, level = st.session_state.pivot_msg
     if level == "success": st.success(msg)
     else: st.error(msg)
-    st.write("Adjust your inputs to the new limit to proceed.")
+    st.write("Adjust your inputs to proceed.")
 
 elif current_phase == "Leadership Change":
     st.header("🚨 Market Event: Leadership Transition")
-    
     if 'leadership_applied' not in st.session_state:
         safety = st.session_state.investments["Psychological Safety"]
         if safety < 20:
             loss = safety
-            st.session_state.leadership_msg = (f"FAILURE: Psychological Safety score was ${safety} (Threshold: $20). The new leader interprets the silence as lack of competence. You lose all ${loss} invested in Safety.", "error")
+            st.session_state.leadership_msg = (f"FAILURE: Psych Safety was ${safety} (Min: $20). You lose all ${loss} invested in Safety.", "error")
             st.session_state.total_budget -= loss
             st.session_state.investments["Psychological Safety"] = 0
-            # AUTO-REFRESH logic: force a rerun to update the budget sidebar immediately
             st.session_state.leadership_applied = True
             st.rerun()
         else:
-            st.session_state.leadership_msg = (f"SUCCESS: Psychological Safety score was ${safety}. Your team was safe enough to speak up early to the new leader. You held your investment.", "success")
+            st.session_state.leadership_msg = (f"SUCCESS: Psych Safety was ${safety}. Your team was safe enough to lead through the transition.", "success")
         st.session_state.leadership_applied = True
-
     msg, level = st.session_state.leadership_msg
     if level == "success": st.success(msg)
     else: st.error(msg)
-    st.write("Adjust your inputs to the new limit to proceed.")
+
+elif current_phase == "Open Enrollment & HEDIS":
+    st.header("❄️ Seasonal Event: Open Enrollment & HEDIS Season")
+    st.info("The time of year where extra effort is key. Your resilience depends on your Pace & Focus.")
+    if 'hedis_applied' not in st.session_state:
+        pace = st.session_state.investments["Sustainable Pace & Focus"]
+        if pace > 19:
+            st.session_state.hedis_msg = (f"SUCCESS: Sustainable Pace was ${pace} (Threshold: >$19). The team had the reserve to meet objectives! Budget +$10.", "success")
+            st.session_state.total_budget += 10
+        else:
+            st.session_state.hedis_msg = (f"FAILURE: Sustainable Pace was only ${pace}. Burnout during HEDIS resulted in errors and missed objectives. Budget -$10.", "error")
+            st.session_state.total_budget -= 10
+        st.session_state.hedis_applied = True
+        st.rerun()
+    msg, level = st.session_state.hedis_msg
+    if level == "success": st.success(msg)
+    else: st.error(msg)
+
+elif current_phase == "IT Build-a-Thon":
+    st.header("🛠️ Event: IT Build-a-Thon")
+    st.write("Innovation time! If your team is too lean, you can't participate.")
+    if 'buildathon_applied' not in st.session_state:
+        # Assuming we check Cross-Team Partnership for this innovation event
+        team_score = st.session_state.investments["Cross-Team Partnership"]
+        if team_score < 17:
+            st.session_state.buildathon_msg = (f"NO ENTRY: Your Team Partnership score is ${team_score}. You didn't have the collaborative capacity to enter. $0 reward.", "warning")
+        elif 17 <= team_score <= 21:
+            st.session_state.buildathon_msg = (f"ENTRY AWARD: Team Partnership score is ${team_score}. You successfully entered and collaborated. Budget +$5.", "success")
+            st.session_state.total_budget += 5
+        else:
+            st.session_state.buildathon_msg = (f"WINNER: Team Partnership score is ${team_score}. High collaboration led to a Build-a-Thon victory! Budget +$10.", "success")
+            st.session_state.total_budget += 10
+        st.session_state.buildathon_applied = True
+        st.rerun()
+    msg, level = st.session_state.buildathon_msg
+    if level == "success": st.success(msg)
+    elif level == "warning": st.warning(msg)
+    else: st.error(msg)
 
 elif current_phase == "Final Analysis":
     st.header("📊 The Final Audit: Intent vs. Reality")
-    
-    if len(st.session_state.history) < 3:
+    if len(st.session_state.history) < 5:
         final_snap = st.session_state.investments.copy()
         final_snap['Label'] = "Final Outcome"
         st.session_state.history.append(final_snap)
-    
     hist_df = pd.DataFrame(st.session_state.history)
     plot_df = hist_df.melt(id_vars=['Label'], var_name='Behavior', value_name='Investment')
     fig = px.bar(plot_df, x='Behavior', y='Investment', color='Label', barmode='group', height=600)
