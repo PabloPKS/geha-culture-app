@@ -89,7 +89,6 @@ elif current_phase == "Strategic Pivot":
     
     if 'pivot_applied' not in st.session_state:
         clarity = st.session_state.investments["Clarity & Decision Discipline"]
-        # THRESHOLD: Penalty if Clarity is less than 20
         if clarity < 20:
             st.session_state.pivot_msg = (f"FAILURE: Your Clarity score is only ${clarity} (Threshold: $20). The pivot caused chaos. Budget -$10.", "error")
             st.session_state.total_budget -= 10
@@ -108,12 +107,14 @@ elif current_phase == "Leadership Change":
     
     if 'leadership_applied' not in st.session_state:
         safety = st.session_state.investments["Psychological Safety"]
-        # NEW LOGIC: If Safety < 20, they lose whatever they had invested in Safety
         if safety < 20:
             loss = safety
             st.session_state.leadership_msg = (f"FAILURE: Psychological Safety score was ${safety} (Threshold: $20). The new leader interprets the silence as lack of competence. You lose all ${loss} invested in Safety.", "error")
             st.session_state.total_budget -= loss
             st.session_state.investments["Psychological Safety"] = 0
+            # AUTO-REFRESH logic: force a rerun to update the budget sidebar immediately
+            st.session_state.leadership_applied = True
+            st.rerun()
         else:
             st.session_state.leadership_msg = (f"SUCCESS: Psychological Safety score was ${safety}. Your team was safe enough to speak up early to the new leader. You held your investment.", "success")
         st.session_state.leadership_applied = True
