@@ -146,7 +146,7 @@ elif current_phase == "Final Analysis":
     
     df = pd.DataFrame(st.session_state.history).melt(id_vars=['Label'], var_name='Behavior', value_name='Investment')
     st.plotly_chart(px.bar(df, x='Behavior', y='Investment', color='Label', barmode='group', height=600), use_container_width=True)
-  st.divider()    
+      st.divider()    
 # Create the Line Chart for Trend Analysis
     fig_line = px.line(
     plot_df, 
