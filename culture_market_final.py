@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import io
 
 # --- PAGE CONFIG ---
 st.set_page_config(page_title="GEHA D&A Culture Stock Market", layout="wide")
@@ -40,7 +41,6 @@ current_phase = PHASES[st.session_state.phase]
 with st.sidebar:
     st.title("Admin & Budget")
     
-    # NEW: Facilitator Name Input
     st.session_state.facilitator_name = st.text_input(
         "Facilitator Name:", 
         value=st.session_state.facilitator_name,
@@ -67,13 +67,12 @@ with st.sidebar:
 
     st.divider()
 
-    # ADVANCE PHASE (with automatic name tagging)
     if st.session_state.phase < len(PHASES) - 1:
         if is_balanced:
             if st.button("➡️ Advance to Next Phase"):
                 snapshot = st.session_state.investments.copy()
                 snapshot['Label'] = current_phase
-                snapshot['Facilitator'] = st.session_state.facilitator_name # Tagging the snapshot
+                snapshot['Facilitator'] = st.session_state.facilitator_name
                 st.session_state.history.append(snapshot)
                 st.session_state.phase += 1
                 st.rerun()
@@ -97,7 +96,6 @@ with st.sidebar:
 # --- MAIN DASHBOARD ---
 st.title("📈 GEHA D&A Culture Stock Market")
 
-# [Event logic remains exactly the same as v8...]
 if current_phase == "Initial Allocation":
     st.header("Phase 1: Your Cultural Baseline")
     st.info("Teams: Enter dollar amounts. Advance button unlocks when budget is exactly $100.")
@@ -113,7 +111,12 @@ elif current_phase == "Recognition Dividend":
             st.session_state.rec_msg = (f"NO DIVIDEND: Recognition was only ${rec}.", "warning")
         st.session_state.recognition_applied = True
         st.rerun()
-    st.success(st.session_state.rec_msg[0]) if st.session_state.rec_msg[1] == "success" else st.warning(st.session_state.rec_msg[0])
+    
+    msg, level = st.session_state.rec_msg
+    if level == "success":
+        st.success(msg)
+    else:
+        st.warning(msg)
 
 elif current_phase == "Strategic Pivot":
     st.header("⚡ Market Event: Strategic Pivot")
@@ -127,7 +130,12 @@ elif current_phase == "Strategic Pivot":
             st.session_state.total_budget += 10
         st.session_state.pivot_applied = True
         st.rerun()
-    st.success(st.session_state.pivot_msg[0]) if st.session_state.pivot_msg[1] == "success" else st.error(st.session_state.pivot_msg[0])
+    
+    msg, level = st.session_state.pivot_msg
+    if level == "success":
+        st.success(msg)
+    else:
+        st.error(msg)
 
 elif current_phase == "Leadership Change":
     st.header("🚨 Market Event: Leadership Transition")
@@ -137,11 +145,18 @@ elif current_phase == "Leadership Change":
             st.session_state.leadership_msg = (f"FAILURE: Safety was ${safety}. You lose all ${safety} invested in Safety.", "error")
             st.session_state.total_budget -= safety
             st.session_state.investments["Psychological Safety"] = 0
+            st.session_state.leadership_applied = True
+            st.rerun()
         else:
             st.session_state.leadership_msg = (f"SUCCESS: Safety was ${safety}.", "success")
         st.session_state.leadership_applied = True
         st.rerun()
-    st.success(st.session_state.leadership_msg[0]) if st.session_state.leadership_msg[1] == "success" else st.error(st.session_state.leadership_msg[0])
+    
+    msg, level = st.session_state.leadership_msg
+    if level == "success":
+        st.success(msg)
+    else:
+        st.error(msg)
 
 elif current_phase == "Open Enrollment & HEDIS":
     st.header("❄️ Seasonal Event: Open Enrollment & HEDIS")
@@ -155,7 +170,12 @@ elif current_phase == "Open Enrollment & HEDIS":
             st.session_state.total_budget -= 10
         st.session_state.hedis_applied = True
         st.rerun()
-    st.success(st.session_state.hedis_msg[0]) if st.session_state.hedis_msg[1] == "success" else st.error(st.session_state.hedis_msg[0])
+    
+    msg, level = st.session_state.hedis_msg
+    if level == "success":
+        st.success(msg)
+    else:
+        st.error(msg)
 
 elif current_phase == "IT Build-a-Thon":
     st.header("🛠️ Event: IT Build-a-Thon")
@@ -171,7 +191,12 @@ elif current_phase == "IT Build-a-Thon":
             st.session_state.total_budget += 10
         st.session_state.buildathon_applied = True
         st.rerun()
-    st.success(st.session_state.buildathon_msg[0]) if st.session_state.buildathon_msg[1] == "success" else st.warning(st.session_state.buildathon_msg[0])
+    
+    msg, level = st.session_state.buildathon_msg
+    if level == "success":
+        st.success(msg)
+    else:
+        st.warning(msg)
 
 elif current_phase == "Enterprise Project Kick-off":
     st.header("🏢 Enterprise Project Kick-off")
@@ -184,7 +209,12 @@ elif current_phase == "Enterprise Project Kick-off":
             st.session_state.ent_msg = (f"MISSED: Partnership was ${partnership}.", "warning")
         st.session_state.enterprise_applied = True
         st.rerun()
-    st.success(st.session_state.ent_msg[0]) if st.session_state.ent_msg[1] == "success" else st.warning(st.session_state.ent_msg[0])
+    
+    msg, level = st.session_state.ent_msg
+    if level == "success":
+        st.success(msg)
+    else:
+        st.warning(msg)
 
 elif current_phase == "Final Analysis":
     st.header("📊 Final Market Analysis")
