@@ -148,7 +148,7 @@ elif current_phase == "Final Analysis":
     st.plotly_chart(px.bar(df, x='Behavior', y='Investment', color='Label', barmode='group', height=600), use_container_width=True)
 st.divider()    
 # Create the Line Chart for Trend Analysis
- fig_line = px.line(
+fig_line = px.line(
     plot_df, 
     x='Label', 
     y='Investment', 
