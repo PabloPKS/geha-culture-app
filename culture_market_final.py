@@ -160,11 +160,11 @@ elif current_phase == "Final Analysis":
     
     # Define a small offset for each behavior to prevent overlapping lines
     offsets = {
-        "Psychological Safety": 0.2,
-        "Cross-Team Partnership": 0.1,
+        "Psychological Safety": 0.5,
+        "Cross-Team Partnership": 0.4,
         "Clarity & Decision Discipline": 0.0,
         "Healthy Debate": -0.1,
-        "Recognition & Reinforcement": -0.2,
+        "Recognition & Reinforcement": -0.5,
         "Sustainable Pace & Focus": -0.3
     }
     
