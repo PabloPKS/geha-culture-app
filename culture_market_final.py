@@ -186,7 +186,8 @@ elif current_phase == "Final Analysis":
     # Clean up the hover labels so they still show the REAL whole numbers
     fig_line.update_traces(hovertemplate="Behavior: %{fullData.name}<br>Phase: %{x}<br>Investment: %{y:.0f}")
     
-    st.plotly_chart(fig_line, use_container_width=True)    st.divider()
+    st.plotly_chart(fig_line, use_container_width=True)    
+    st.divider()
     if st.button("🤖 Analyze Cultural DNA"):
         s, c, p = st.session_state.investments["Psychological Safety"], st.session_state.investments["Clarity & Decision Discipline"], st.session_state.investments["Sustainable Pace & Focus"]
         if s < 10 and c > 30: st.session_state.ai_summary = "High-precision but high-fear culture. Technical clarity hides silent human risks."
