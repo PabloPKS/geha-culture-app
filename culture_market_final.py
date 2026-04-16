@@ -136,7 +136,7 @@ elif current_phase == "Enterprise Project Kick-off":
     if lvl == "success": st.success(msg)
     else: st.warning(msg)
 
-# PHASE 8: FINAL
+# PHASE 8: FINAL ANALYSIS
 elif current_phase == "Final Analysis":
     st.header("📊 Final Market Analysis")
     if len(st.session_state.history) < 7:
@@ -144,21 +144,18 @@ elif current_phase == "Final Analysis":
         final['Label'] = "Final Outcome"
         st.session_state.history.append(final)
     
-    df = pd.DataFrame(st.session_state.history).melt(id_vars=['Label'], var_name='Behavior', value_name='Investment')
-    st.plotly_chart(px.bar(df, x='Behavior', y='Investment', color='Label', barmode='group', height=600), use_container_width=True)
-    # Create the Line Chart for Trend Analysis
-fig_line = px.line(
-    plot_df, 
-    x='Label', 
-    y='Investment', 
-    color='Behavior', 
-    markers=True,
-    height=600,
-    title="Cultural Momentum: The Evolution of our Values"
-)
-
-# Display the Line Chart in the Final Analysis
-st.plotly_chart(fig_line, use_container_width=True)
+    # Prep data for charts
+    df_history = pd.DataFrame(st.session_state.history)
+    plot_df = df_history.melt(id_vars=['Label'], var_name='Behavior', value_name='Investment')
+    
+    # 1. Bar Chart
+    st.subheader("Snapshot Comparison")
+    st.plotly_chart(px.bar(plot_df, x='Behavior', y='Investment', color='Label', barmode='group', height=500), use_container_width=True)
+    
+    # 2. Line Chart (Trend Analysis)
+    st.subheader("Cultural Momentum (Trend)")
+    st.plotly_chart(px.line(plot_df, x='Label', y='Investment', color='Behavior', markers=True, height=500), use_container_width=True)
+    
     st.divider()
     if st.button("🤖 Analyze Cultural DNA"):
         s, c, p = st.session_state.investments["Psychological Safety"], st.session_state.investments["Clarity & Decision Discipline"], st.session_state.investments["Sustainable Pace & Focus"]
