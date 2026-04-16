@@ -29,7 +29,7 @@ current_phase = PHASES[st.session_state.phase]
 # --- SIDEBAR & BUDGET LOGIC ---
 with st.sidebar:
     st.title("Admin & Budget")
-    st.session_state.facilitator_name = st.text_input("Facilitator Name:", value=st.session_state.facilitator_name)
+    st.session_state.facilitator_name = st.text_input("Name:", value=st.session_state.facilitator_name)
     st.metric("Target Budget", f"${st.session_state.total_budget}")
     
     total_spent = sum(st.session_state.investments.values())
