@@ -130,7 +130,7 @@ elif current_phase == "Enterprise Project Kick-off":
     if 'ent_app' not in st.session_state:
         val = st.session_state.investments["Cross-Team Partnership"]
         if val > 25: st.session_state.total_budget += 20; st.session_state.ent_res = ("SUCCESS: +$20", "success")
-        else:  st.session_state.total_budget -= 10; st.session_state.ent_res = ("PROJECT FAILURE.", "warning")
+        else:  st.session_state.total_budget -= 20; st.session_state.ent_res = ("PROJECT FAILURE.", "warning")
         st.session_state.ent_app = True; st.rerun()
     msg, lvl = st.session_state.ent_res
     if lvl == "success": st.success(msg)
