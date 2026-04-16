@@ -160,7 +160,7 @@ fig_line = px.line(
 
 # Display the Line Chart in the Final Analysis
 st.plotly_chart(fig_line, use_container_width=True)
-    st.divider()
+st.divider()
     if st.button("🤖 Analyze Cultural DNA"):
         s, c, p = st.session_state.investments["Psychological Safety"], st.session_state.investments["Clarity & Decision Discipline"], st.session_state.investments["Sustainable Pace & Focus"]
         if s < 10 and c > 30: st.session_state.ai_summary = "High-precision but high-fear culture. Technical clarity hides silent human risks."
