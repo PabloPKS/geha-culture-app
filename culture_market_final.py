@@ -152,11 +152,41 @@ elif current_phase == "Final Analysis":
     st.subheader("Snapshot Comparison")
     st.plotly_chart(px.bar(plot_df, x='Behavior', y='Investment', color='Label', barmode='group', height=500), use_container_width=True)
     
-    # 2. Line Chart (Trend Analysis)
+    # 2. Line Chart (Trend Analysis with Jitter)
     st.subheader("Cultural Momentum (Trend)")
-    st.plotly_chart(px.line(plot_df, x='Label', y='Investment', color='Behavior', markers=True, height=500), use_container_width=True)
     
-    st.divider()
+    # Create a copy for jittering so we don't mess up the real data or CSV
+    jitter_df = plot_df.copy()
+    
+    # Define a small offset for each behavior to prevent overlapping lines
+    offsets = {
+        "Psychological Safety": 0.2,
+        "Cross-Team Partnership": 0.1,
+        "Clarity & Decision Discipline": 0.0,
+        "Healthy Debate": -0.1,
+        "Recognition & Reinforcement": -0.2,
+        "Sustainable Pace & Focus": -0.3
+    }
+    
+    # Apply the jiggle
+    jitter_df['Investment'] = jitter_df.apply(
+        lambda row: row['Investment'] + offsets.get(row['Behavior'], 0), axis=1
+    )
+
+    fig_line = px.line(
+        jitter_df, 
+        x='Label', 
+        y='Investment', 
+        color='Behavior', 
+        markers=True, 
+        height=500,
+        title="Evolution of Values (Jittered for Clarity)"
+    )
+    
+    # Clean up the hover labels so they still show the REAL whole numbers
+    fig_line.update_traces(hovertemplate="Behavior: %{fullData.name}<br>Phase: %{x}<br>Investment: %{y:.0f}")
+    
+    st.plotly_chart(fig_line, use_container_width=True)    st.divider()
     if st.button("🤖 Analyze Cultural DNA"):
         s, c, p = st.session_state.investments["Psychological Safety"], st.session_state.investments["Clarity & Decision Discipline"], st.session_state.investments["Sustainable Pace & Focus"]
         if s < 10 and c > 30: st.session_state.ai_summary = "High-precision but high-fear culture. Technical clarity hides silent human risks."
