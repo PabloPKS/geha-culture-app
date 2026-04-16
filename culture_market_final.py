@@ -65,6 +65,7 @@ if current_phase == "Initial Allocation":
 
 # PHASE 2: RECOGNITION
 elif current_phase == "Recognition Dividend":
+    st.info("Teams: Allocate your $100. Balance the budget to unlock the next phase.")
     if 'rec_app' not in st.session_state:
         val = st.session_state.investments["Recognition & Reinforcement"]
         if val > 20: st.session_state.total_budget += 10; st.session_state.rec_res = ("SUCCESS: Morale boost! +$10", "success")
