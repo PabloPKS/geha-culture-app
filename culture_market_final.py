@@ -146,7 +146,20 @@ elif current_phase == "Final Analysis":
     
     df = pd.DataFrame(st.session_state.history).melt(id_vars=['Label'], var_name='Behavior', value_name='Investment')
     st.plotly_chart(px.bar(df, x='Behavior', y='Investment', color='Label', barmode='group', height=600), use_container_width=True)
-    
+  st.divider()    
+# Create the Line Chart for Trend Analysis
+fig_line = px.line(
+    plot_df, 
+    x='Label', 
+    y='Investment', 
+    color='Behavior', 
+    markers=True,
+    height=600,
+    title="Cultural Momentum: The Evolution of our Values"
+)
+
+# Display the Line Chart in the Final Analysis
+st.plotly_chart(fig_line, use_container_width=True)
     st.divider()
     if st.button("🤖 Analyze Cultural DNA"):
         s, c, p = st.session_state.investments["Psychological Safety"], st.session_state.investments["Clarity & Decision Discipline"], st.session_state.investments["Sustainable Pace & Focus"]
