@@ -1,8 +1,3 @@
-Your Streamlit app is ready. I’ve updated the code to include the pandas and openpyxl libraries to handle the data tracking and Excel export.
-
-At the end of the session, the app will now generate a downloadable Excel file containing the full transcript of the user's performance, including the specific rationale for each scenario.
-
-Python
 import streamlit as st
 import pandas as pd
 from io import BytesIO
