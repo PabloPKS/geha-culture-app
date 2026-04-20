@@ -3,7 +3,26 @@ import pandas as pd
 from io import BytesIO
 
 # --- APP CONFIG ---
-st.set_page_config(page_title="GEHA Triage Trainer", page_icon="🚦", layout="centered")
+st.set_page_config(page_title="GEHA Triage Trainer", page_icon="🚦", layout="wide")
+
+# --- PERSISTENT DEFINITIONS (SIDEBAR) ---
+with st.sidebar:
+    st.header("📖 Triage Definitions")
+    st.markdown("""
+    ### 📡 **SIGNAL**
+    **Action Now.** Affects trust, external commitments, regulatory risk, or core operations. Calm but deliberate action is justified.
+    
+    ---
+    ### ❓ **UNKNOWN**
+    **Validate First.** Feels urgent but requires context. Acting too fast increases noise or rework.
+    
+    ---
+    ### 🌪️ **NOISE**
+    **Ignore/Shield.** Distracting or emotionally charged. Pulls focus away from clarity and increases anxiety.
+    """)
+    st.divider()
+    if 'score' in st.session_state:
+        st.metric("Current Score", f"{st.session_state.score}")
 
 # --- SCENARIOS DATA ---
 scenarios = [
@@ -32,18 +51,18 @@ if 'index' not in st.session_state:
     st.session_state.complete = False
     st.session_state.results_log = []
 
-# --- UI ---
+# --- MAIN UI ---
 st.title("🚦 GEHA Information Triage Trainer")
-st.write("Practice categorizing information to reduce organizational anxiety.")
 
 if not st.session_state.complete:
     progress = st.session_state.index / len(scenarios)
     st.progress(progress)
-    st.write(f"Scenario {st.session_state.index + 1} of {len(scenarios)}")
+    st.write(f"**Scenario {st.session_state.index + 1} of {len(scenarios)}**")
 
     current_item = scenarios[st.session_state.index]
     
     with st.container(border=True):
+        st.subheader("Situation:")
         st.info(current_item["text"])
     
     if not st.session_state.answered:
@@ -59,7 +78,6 @@ if not st.session_state.complete:
         if user_choice:
             st.session_state.answered = True
             st.session_state.current_choice = user_choice
-            # Log the result
             st.session_state.results_log.append({
                 "Scenario": current_item["text"],
                 "Your Answer": user_choice,
@@ -95,10 +113,8 @@ else:
     final_pct = (st.session_state.score / len(scenarios)) * 100
     st.metric("Final Score", f"{st.session_state.score}/{len(scenarios)}", f"{final_pct:.0f}%")
 
-    # --- EXCEL EXPORT LOGIC ---
+    # Excel Export
     df = pd.DataFrame(st.session_state.results_log)
-    
-    # Create buffer for Excel file
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='TriageResults')
