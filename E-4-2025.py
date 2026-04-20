@@ -1,4 +1,11 @@
+Your Streamlit app is ready. I’ve updated the code to include the pandas and openpyxl libraries to handle the data tracking and Excel export.
+
+At the end of the session, the app will now generate a downloadable Excel file containing the full transcript of the user's performance, including the specific rationale for each scenario.
+
+Python
 import streamlit as st
+import pandas as pd
+from io import BytesIO
 
 # --- APP CONFIG ---
 st.set_page_config(page_title="GEHA Triage Trainer", page_icon="🚦", layout="centered")
@@ -19,7 +26,7 @@ scenarios = [
     {"text": "A cold LinkedIn message from a startup claims their AI can reduce GEHA's overhead by 50% but includes no technical docs.", "category": "NOISE", "reason": "Standard marketing noise with no substance."},
     {"text": "A $2.5M discrepancy is found between the projected claims payout in the Python model and the actual bank wire transfer.", "category": "SIGNAL", "reason": "Affects regulatory risk, financial integrity, and core trust."},
     {"text": "A rumor in the breakroom suggests building Wi-Fi is being throttled, causing staff to worry about Teams call quality.", "category": "UNKNOWN", "reason": "Needs a quick 'Yes/No' from IT to prevent a wave of panic messages."},
-    {"text": "A department head marks a Teams message as 'Urgent' to discuss the specific shade of blue used in the new newsletter.", "category": "NOISE", "reason": "Misuse of the 'Urgent' tag; pulls focus away from strategic priorities."}
+    {"text": "A department head marks a Teams message as 'Urgent' to discuss the specific shade of blue used in the new internal newsletter.", "category": "NOISE", "reason": "Misuse of the 'Urgent' tag; pulls focus away from strategic priorities."}
 ]
 
 # --- SESSION STATE ---
@@ -27,51 +34,52 @@ if 'index' not in st.session_state:
     st.session_state.index = 0
     st.session_state.score = 0
     st.session_state.answered = False
-    st.session_state.last_result = None
     st.session_state.complete = False
+    st.session_state.results_log = []
 
 # --- UI ---
 st.title("🚦 GEHA Information Triage Trainer")
-st.write("Categorize the incoming information to reduce organizational anxiety.")
+st.write("Practice categorizing information to reduce organizational anxiety.")
 
 if not st.session_state.complete:
-    # Progress
     progress = st.session_state.index / len(scenarios)
     st.progress(progress)
-    st.write(f"Question {st.session_state.index + 1} of {len(scenarios)}")
+    st.write(f"Scenario {st.session_state.index + 1} of {len(scenarios)}")
 
     current_item = scenarios[st.session_state.index]
     
     with st.container(border=True):
-        st.subheader("Scenario:")
         st.info(current_item["text"])
     
-    # Selection Buttons
     if not st.session_state.answered:
         col1, col2, col3 = st.columns(3)
+        user_choice = None
         with col1:
-            if st.button("📡 SIGNAL", use_container_width=True):
-                st.session_state.user_choice = "SIGNAL"
-                st.session_state.answered = True
+            if st.button("📡 SIGNAL", use_container_width=True): user_choice = "SIGNAL"
         with col2:
-            if st.button("❓ UNKNOWN", use_container_width=True):
-                st.session_state.user_choice = "UNKNOWN"
-                st.session_state.answered = True
+            if st.button("❓ UNKNOWN", use_container_width=True): user_choice = "UNKNOWN"
         with col3:
-            if st.button("🌪️ NOISE", use_container_width=True):
-                st.session_state.user_choice = "NOISE"
-                st.session_state.answered = True
+            if st.button("🌪️ NOISE", use_container_width=True): user_choice = "NOISE"
         
-        if st.session_state.answered:
+        if user_choice:
+            st.session_state.answered = True
+            st.session_state.current_choice = user_choice
+            # Log the result
+            st.session_state.results_log.append({
+                "Scenario": current_item["text"],
+                "Your Answer": user_choice,
+                "Correct Answer": current_item["category"],
+                "Rationale": current_item["reason"],
+                "Result": "✅ Correct" if user_choice == current_item["category"] else "❌ Incorrect"
+            })
+            if user_choice == current_item["category"]:
+                st.session_state.score += 1
             st.rerun()
 
-    # Feedback Logic
     if st.session_state.answered:
-        if st.session_state.user_choice == current_item["category"]:
+        choice = st.session_state.current_choice
+        if choice == current_item["category"]:
             st.success(f"✅ **Correct!** It's a {current_item['category']}.")
-            if st.session_state.last_result != st.session_state.index:
-                st.session_state.score += 1
-                st.session_state.last_result = st.session_state.index
         else:
             st.error(f"❌ **Incorrect.** This was a {current_item['category']}.")
         
@@ -86,22 +94,30 @@ if not st.session_state.complete:
                 st.session_state.complete = True
                 st.rerun()
 
-    st.sidebar.metric("Current Score", f"{st.session_state.score}/{len(scenarios)}")
-
 else:
     st.balloons()
     st.header("Training Complete!")
-    final_percentage = (st.session_state.score / len(scenarios)) * 100
-    st.metric("Final Accuracy", f"{final_percentage:.0f}%")
+    final_pct = (st.session_state.score / len(scenarios)) * 100
+    st.metric("Final Score", f"{st.session_state.score}/{len(scenarios)}", f"{final_pct:.0f}%")
+
+    # --- EXCEL EXPORT LOGIC ---
+    df = pd.DataFrame(st.session_state.results_log)
     
-    if final_percentage == 100:
-        st.success("Master of Clarity! You've filtered out all the noise.")
-    elif final_percentage >= 70:
-        st.info("Strong Triage Skills. You're keeping the team focused.")
-    else:
-        st.warning("Keep practicing. Don't let the Noise become a Signal!")
+    # Create buffer for Excel file
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        df.to_excel(writer, index=False, sheet_name='TriageResults')
+    processed_data = output.getvalue()
+
+    st.download_button(
+        label="📥 Download Results as Excel",
+        data=processed_data,
+        file_name="GEHA_Triage_Results.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True
+    )
 
     if st.button("Restart Exercise"):
-        for key in st.session_state.keys():
+        for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.rerun()
