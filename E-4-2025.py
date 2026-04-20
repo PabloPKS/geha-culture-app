@@ -5,25 +5,6 @@ from io import BytesIO
 # --- APP CONFIG ---
 st.set_page_config(page_title="GEHA Triage Trainer", page_icon="🚦", layout="wide")
 
-# --- PERSISTENT DEFINITIONS (SIDEBAR) ---
-with st.sidebar:
-    st.header("📖 Triage Definitions")
-    st.markdown("""
-    ### 📡 **SIGNAL**
-    **Action Now.** Affects trust, external commitments, regulatory risk, or core operations. Calm but deliberate action is justified.
-    
-    ---
-    ### ❓ **UNKNOWN**
-    **Validate First.** Feels urgent but requires context. Acting too fast increases noise or rework.
-    
-    ---
-    ### 🌪️ **NOISE**
-    **Ignore/Shield.** Distracting or emotionally charged. Pulls focus away from clarity and increases anxiety.
-    """)
-    st.divider()
-    if 'score' in st.session_state:
-        st.metric("Current Score", f"{st.session_state.score}")
-
 # --- SCENARIOS DATA ---
 scenarios = [
     {"text": "A Teams chat in the 'Fun-Stuff' channel has reached 50+ notifications because people are debating if a hotdog is a sandwich.", "category": "NOISE", "reason": "High engagement, zero impact on core operations or regulatory risk."},
@@ -40,16 +21,41 @@ scenarios = [
     {"text": "A cold LinkedIn message from a startup claims their AI can reduce GEHA's overhead by 50% but includes no technical docs.", "category": "NOISE", "reason": "Standard marketing noise with no substance."},
     {"text": "A $2.5M discrepancy is found between the projected claims payout in the Python model and the actual bank wire transfer.", "category": "SIGNAL", "reason": "Affects regulatory risk, financial integrity, and core trust."},
     {"text": "A rumor in the breakroom suggests building Wi-Fi is being throttled, causing staff to worry about Teams call quality.", "category": "UNKNOWN", "reason": "Needs a quick 'Yes/No' from IT to prevent a wave of panic messages."},
-    {"text": "A department head marks a Teams message as 'Urgent' to discuss the specific shade of blue used in the new internal newsletter.", "category": "NOISE", "reason": "Misuse of the 'Urgent' tag; pulls focus away from strategic priorities."}
+    {"text": "A department head marks a Teams message as 'Urgent' to discuss the specific shade of blue used in the new newsletter.", "category": "NOISE", "reason": "Misuse of the 'Urgent' tag; pulls focus away from strategic priorities."}
 ]
 
 # --- SESSION STATE ---
 if 'index' not in st.session_state:
     st.session_state.index = 0
     st.session_state.score = 0
+    st.session_state.questions_done = 0
     st.session_state.answered = False
     st.session_state.complete = False
     st.session_state.results_log = []
+
+# --- PERSISTENT DEFINITIONS (SIDEBAR) ---
+with st.sidebar:
+    st.header("📖 Triage Definitions")
+    st.markdown("""
+    ### 📡 **SIGNAL**
+    **Action Now.** Affects trust, regulatory risk, or core operations.
+    
+    ---
+    ### ❓ **UNKNOWN**
+    **Validate First.** Requires context before acting to avoid rework.
+    
+    ---
+    ### 🌪️ **NOISE**
+    **Ignore/Shield.** Distracting. Pulls focus away from clarity.
+    """)
+    st.divider()
+    
+    # Running Score Display
+    if st.session_state.questions_done > 0:
+        accuracy = (st.session_state.score / st.session_state.questions_done) * 100
+        st.metric("Current Accuracy", f"{st.session_state.score} / {st.session_state.questions_done}", f"{accuracy:.0f}%")
+    else:
+        st.info("Start the exercise to see your score.")
 
 # --- MAIN UI ---
 st.title("🚦 GEHA Information Triage Trainer")
@@ -77,16 +83,20 @@ if not st.session_state.complete:
         
         if user_choice:
             st.session_state.answered = True
+            st.session_state.questions_done += 1
             st.session_state.current_choice = user_choice
+            
+            is_correct = user_choice == current_item["category"]
+            if is_correct:
+                st.session_state.score += 1
+                
             st.session_state.results_log.append({
                 "Scenario": current_item["text"],
                 "Your Answer": user_choice,
                 "Correct Answer": current_item["category"],
                 "Rationale": current_item["reason"],
-                "Result": "✅ Correct" if user_choice == current_item["category"] else "❌ Incorrect"
+                "Result": "✅ Correct" if is_correct else "❌ Incorrect"
             })
-            if user_choice == current_item["category"]:
-                st.session_state.score += 1
             st.rerun()
 
     if st.session_state.answered:
@@ -110,8 +120,7 @@ if not st.session_state.complete:
 else:
     st.balloons()
     st.header("Training Complete!")
-    final_pct = (st.session_state.score / len(scenarios)) * 100
-    st.metric("Final Score", f"{st.session_state.score}/{len(scenarios)}", f"{final_pct:.0f}%")
+    st.metric("Final Accuracy", f"{st.session_state.score} / {len(scenarios)}", f"{(st.session_state.score/len(scenarios))*100:.0f}%")
 
     # Excel Export
     df = pd.DataFrame(st.session_state.results_log)
