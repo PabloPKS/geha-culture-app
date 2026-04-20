@@ -53,7 +53,7 @@ with st.sidebar:
     # Running Score Display
     if st.session_state.questions_done > 0:
         accuracy = (st.session_state.score / st.session_state.questions_done) * 100
-        st.metric("Current Accuracy", f"{st.session_state.score} / {st.session_state.questions_done}", f"{accuracy:.0f}%")
+        st.metric("Current Accuracy", f"{st.session_state.score} / {st.session_state.questions_done}")
     else:
         st.info("Start the exercise to see your score.")
 
