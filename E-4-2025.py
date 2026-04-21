@@ -30,7 +30,7 @@ raw_scenarios = [
     {"text": "Microsoft announces an 'End of Life' date for an Azure framework that powers 40% of GEHA’s internal data pipelines.", "category": "SIGNAL", "reason": "Explicit future failure of core operations."},
     {"text": "A cold LinkedIn message from a startup claims their AI can reduce GEHA's overhead by 50% but includes no technical docs.", "category": "NOISE", "reason": "Standard vendor noise; no explicit risk or operation involved."},
     {"text": "A $2.5M discrepancy is found between the projected claims payout in the Python model and the actual bank wire transfer.", "category": "SIGNAL", "reason": "Explicit regulatory and financial risk."},
-    {"text": "A rumor in the breakroom suggests building Wi-Fi is being throttled, causing staff to worry about Teams call quality.", "category": "UNKNOWN", "reason": "Potential impact on core communication; needs IT validation."},
+    {"text": "A rumor that a senior leader is being forced out due to an ethical disagreement over member data handling.", "category": "UNKNOWN", "reason": "This impacts the 'Trust' pillar. It requires quiet validation to determine if it is a Signal (cultural shift) or Noise (gossip) before reacting."},
     {"text": "A department head marks a Teams message as 'Urgent' to discuss the specific shade of blue used in the new internal newsletter.", "category": "NOISE", "reason": "Explicitly cosmetic; no risk to core operations or trust."},
     {"text": "A news headline says a major cloud provider had a localized outage in the 'EU-West' region; GEHA's data is strictly in 'US-Central'.", "category": "NOISE", "reason": "Explicitly outside GEHA's operational zone."}
 ]
