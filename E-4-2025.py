@@ -1,12 +1,16 @@
 import streamlit as st
 import pandas as pd
 from io import BytesIO
+import random
 
 # --- APP CONFIG ---
 st.set_page_config(page_title="GEHA Triage Trainer", page_icon="🚦", layout="wide")
 
 # --- SCENARIOS DATA ---
-scenarios = [
+raw_scenarios = [
+    {"text": "Scott sends a direct message: 'The Board has shifted priority to the PBM integration. Put all other data migrations on hold immediately.'", "category": "SIGNAL", "reason": "Scott's directive represents a strategic pivot with external board commitments and immediate resource impact."},
+    {"text": "Pablo asks in a meeting: 'Hey, has anyone looked into those new data privacy regulations in California? I wonder if they affect our 2027 roadmap.'", "category": "UNKNOWN", "reason": "Pablo is seeking context. This requires validation to see if it applies to GEHA before any action is taken."},
+    {"text": "Hiro sends an 'Urgent' Teams invite to the entire leadership team to debate whether the 'Submit' button on the internal site should be rounded or square.", "category": "NOISE", "reason": "Hiro's request is a distraction. It's emotionally charged but doesn't affect core operations or risk."},
     {"text": "A Teams chat in the 'Fun-Stuff' channel has reached 50+ notifications because people are debating if a hotdog is a sandwich.", "category": "NOISE", "reason": "High engagement, zero impact on core operations or regulatory risk."},
     {"text": "A lead developer mentions that a recent Microsoft Graph API update 'might' break the portal connection, but logs haven't been checked.", "category": "UNKNOWN", "reason": "Potential risk, but requires a log check before escalating to a Signal."},
     {"text": "Automated high-priority alert: The SQL database for claims processing has hit 98% storage capacity.", "category": "SIGNAL", "reason": "Core operations risk. If the DB hits 100%, claims stop moving."},
@@ -14,17 +18,23 @@ scenarios = [
     {"text": "A news headline breaks stating that a major national healthcare competitor is undergoing a surprise federal audit for HIPAA compliance.", "category": "UNKNOWN", "reason": "Industry-relevant, but context is needed to see if GEHA shares the same vulnerability."},
     {"text": "A Power BI dashboard used for executive reporting shows a 'Data Source Error' 15 minutes before the Board meeting.", "category": "SIGNAL", "reason": "Affects trust and external commitments (The Board)."},
     {"text": "A stakeholder requests a 10-year projection for a pilot program that has only been live in the 'Sandwich' environment for three weeks.", "category": "NOISE", "reason": "Premature. 10-year projections on 3 weeks of data is just 'Noise with Math.'"},
-    {"text": "The 'Expected Completion Date' column in a shared SharePoint list has disappeared, and the PM isn't sure who edited the view.", "category": "UNKNOWN", "reason": "Could be a simple UI glitch (Noise) or a data loss issue (Signal). Needs validation."},
+    {"text": "The 'Expected Completion Date' column in a shared SharePoint list has disappeared, and the PM isn't sure who edited the view.", "category": "UNKNOWN", "reason": "Could be a simple UI glitch or a data loss issue. Needs validation."},
     {"text": "A senior analyst on your team suddenly clears their desk and leaves the office mid-day without telling anyone before a milestone.", "category": "SIGNAL", "reason": "Significant risk to core operations and personnel management."},
     {"text": "An anonymous tip in the suggestion box states 'leadership doesn't listen,' but no specific department is provided.", "category": "NOISE", "reason": "Too vague to be actionable; creates anxiety without a path to resolution."},
     {"text": "Microsoft announces an 'End of Life' date for an Azure framework that powers 40% of GEHA’s internal data pipelines.", "category": "SIGNAL", "reason": "Affects core operations and requires intentional coordination to migrate."},
     {"text": "A cold LinkedIn message from a startup claims their AI can reduce GEHA's overhead by 50% but includes no technical docs.", "category": "NOISE", "reason": "Standard marketing noise with no substance."},
     {"text": "A $2.5M discrepancy is found between the projected claims payout in the Python model and the actual bank wire transfer.", "category": "SIGNAL", "reason": "Affects regulatory risk, financial integrity, and core trust."},
     {"text": "A rumor in the breakroom suggests building Wi-Fi is being throttled, causing staff to worry about Teams call quality.", "category": "UNKNOWN", "reason": "Needs a quick 'Yes/No' from IT to prevent a wave of panic messages."},
-    {"text": "A department head marks a Teams message as 'Urgent' to discuss the specific shade of blue used in the new newsletter.", "category": "NOISE", "reason": "Misuse of the 'Urgent' tag; pulls focus away from strategic priorities."}
+    {"text": "A department head marks a Teams message as 'Urgent' to discuss the specific shade of blue used in the new internal newsletter.", "category": "NOISE", "reason": "Misuse of the 'Urgent' tag; pulls focus away from strategic priorities."}
 ]
 
 # --- SESSION STATE ---
+if 'scenarios' not in st.session_state:
+    # Shuffle only once at the very beginning
+    shuffled = raw_scenarios.copy()
+    random.shuffle(shuffled)
+    st.session_state.scenarios = shuffled
+    
 if 'index' not in st.session_state:
     st.session_state.index = 0
     st.session_state.score = 0
@@ -50,22 +60,19 @@ with st.sidebar:
     """)
     st.divider()
     
-    # Running Score Display
     if st.session_state.questions_done > 0:
         accuracy = (st.session_state.score / st.session_state.questions_done) * 100
-        st.metric("Current Accuracy", f"{st.session_state.score} / {st.session_state.questions_done}")
-    else:
-        st.info("Start the exercise to see your score.")
+        st.metric("Current Accuracy", f"{st.session_state.score} / {st.session_state.questions_done}", f"{accuracy:.0f}%")
 
 # --- MAIN UI ---
 st.title("🚦 GEHA Information Triage Trainer")
 
 if not st.session_state.complete:
-    progress = st.session_state.index / len(scenarios)
+    progress = st.session_state.index / len(st.session_state.scenarios)
     st.progress(progress)
-    st.write(f"**Scenario {st.session_state.index + 1} of {len(scenarios)}**")
+    st.write(f"**Scenario {st.session_state.index + 1} of {len(st.session_state.scenarios)}** (Randomized)")
 
-    current_item = scenarios[st.session_state.index]
+    current_item = st.session_state.scenarios[st.session_state.index]
     
     with st.container(border=True):
         st.subheader("Situation:")
@@ -109,7 +116,7 @@ if not st.session_state.complete:
         st.write(f"**Rationale:** {current_item['reason']}")
         
         if st.button("Next Scenario ➡️", use_container_width=True):
-            if st.session_state.index < len(scenarios) - 1:
+            if st.session_state.index < len(st.session_state.scenarios) - 1:
                 st.session_state.index += 1
                 st.session_state.answered = False
                 st.rerun()
@@ -120,9 +127,8 @@ if not st.session_state.complete:
 else:
     st.balloons()
     st.header("Training Complete!")
-    st.metric("Final Accuracy", f"{st.session_state.score} / {len(scenarios)}", f"{(st.session_state.score/len(scenarios))*100:.0f}%")
+    st.metric("Final Accuracy", f"{st.session_state.score} / {len(st.session_state.scenarios)}", f"{(st.session_state.score/len(st.session_state.scenarios))*100:.0f}%")
 
-    # Excel Export
     df = pd.DataFrame(st.session_state.results_log)
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
@@ -137,7 +143,8 @@ else:
         use_container_width=True
     )
 
-    if st.button("Restart Exercise"):
+    if st.button("Restart & Reshuffle Scenarios"):
+        # Clear all state to force a new shuffle
         for key in list(st.session_state.keys()):
             del st.session_state[key]
         st.rerun()
